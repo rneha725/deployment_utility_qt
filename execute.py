@@ -68,7 +68,7 @@ def deserialize_command(command_dict):
 def create_command_str(cust_id, app_id, processes):
     process_list_cust = processes.split(',')
     print(cust_id, app_id)
-    customer_data = data.applications[app_id][cust_id]
+    customer_data = global_vars.applications[app_id][cust_id]
     neo_commands = []
     for process in process_list_cust:
 
@@ -76,18 +76,19 @@ def create_command_str(cust_id, app_id, processes):
         password = ""
         if customer_data["user"]:
             user = customer_data["user"]
-        elif data.global_data["user"]:
-            user = data.global_data["user"]
+        elif global_vars.global_data["user"]:
+            user = global_vars.global_data["user"]
 
         if customer_data["password"]:
             password = customer_data["password"]
-        elif data.global_data["password"]:
-            password = data.global_data["password"]
+        elif global_vars.global_data["password"]:
+            password = global_vars.global_data["password"]
 
-        command_dict = get_command(neo=data.global_data["neo_command"], process=process,
+        command_dict = get_command(neo=global_vars.global_data["neo_command"], process=process,
                                    account=customer_data["account"],
                                    application=customer_data["application"], user=user, password=password,
-                                   host=data.global_data["host"], source=data.global_data["source"][app_id])
+                                   host=global_vars.global_data["host"],
+                                   source=global_vars.global_data["source"][app_id])
         print(command_dict)
         neo_commands.append(command_dict)
 

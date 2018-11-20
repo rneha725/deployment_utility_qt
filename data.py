@@ -1,14 +1,10 @@
 import json
 
-FILE = "attributes.json"
-global_data = {}
-customer_list = {}
-application_metadata = {}
-applications = {}
+import global_vars
 
 
 def set_attribute_data(attribute):
-    with open(FILE) as data_file:
+    with open(global_vars.FILE) as data_file:
         global data
         data = json.load(data_file)
     attribute_data = data[attribute]
@@ -16,15 +12,10 @@ def set_attribute_data(attribute):
 
 
 def set_attr_data():
-    global global_data
-    global_data = set_attribute_data("data")
+    global_vars.global_data = set_attribute_data("data")
 
-    global customer_list
-    customer_list = set_attribute_data("customers")
+    global_vars.customer_list = set_attribute_data("customers")
 
-    global application_metadata
-    application_metadata = set_attribute_data("applications_meta")
+    global_vars.application_metadata = set_attribute_data("applications_meta")
 
-    global applications
-    applications = set_attribute_data("applications")
-
+    global_vars.applications = set_attribute_data("applications")

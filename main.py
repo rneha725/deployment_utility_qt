@@ -4,16 +4,11 @@ from functools import partial
 from PyQt5.QtWidgets import *
 
 import data
+import edit_add_dialog
 import execute
 import global_vars
 
 execute_for_customer = {}
-
-
-def ini():
-    for key in execute.status_button_list:  # type: QPushButton
-        button = execute.status_button_list[key][0]
-        button.clicked.connect(partial(open_status_dialog, key))
 
 
 def open_status_dialog(key):
@@ -23,6 +18,7 @@ def open_status_dialog(key):
         print("here")
         global_vars.status_text.setdefault(key, "__")
     status_message_box = QMessageBox(parent=main_window)
+    status_message_box.setWindowTitle("Status")
     status_message_box.setText(global_vars.status_text[key])
     status_message_box.setParent(main_window)
     status_message_box.show()
@@ -31,16 +27,17 @@ def open_status_dialog(key):
 def get_selection_vbox():
     selection_vbox = QVBoxLayout()
 
-    for app_id in data.application_metadata:
-        app_name = data.application_metadata[app_id]["name"]
-        customer_list = data.application_metadata[app_id]["customers"]
+    for app_id in global_vars.application_metadata:
+        app_name = global_vars.application_metadata[app_id]["name"]
+        customer_list = global_vars.application_metadata[app_id]["customers"]  # type:dict
         form_group = QGroupBox(app_name)
         form_layout = QFormLayout()
 
-        for cust_id in customer_list:
+        for cust_id in customer_list:  # type: dict
             status_button = QPushButton("__")
             execute.status_button_list.setdefault(cust_id + "," + app_id, [status_button])
-            customer_data = data.customer_list[cust_id]
+            status_button.clicked.connect(partial(open_status_dialog, cust_id + "," + app_id))
+            customer_data = global_vars.customer_list[cust_id]
             check_box = QCheckBox()
 
             execute_for_customer.setdefault(cust_id + "," + app_id, check_box)
@@ -54,21 +51,8 @@ def get_selection_vbox():
 
 
 def open_edit_dialog():
-    selection_window = QWidget(parent=main_window)
-    selection_window.setWindowTitle("Edit/Add")
-    # two drop down
-    combohbox = QHBoxLayout(QWidget=selection_window)
-
-    customer_drop_down = QComboBox()
-    for key in data.customer_list:
-        text = key + "." + data.customer_list[key]["name"]
-        print(text)
-        customer_drop_down.addItem(text)
-
-    combohbox.addWidget(customer_drop_down)
-    selection_window.setLayout(combohbox)
-
-    selection_window.show()
+    edit_add_window = edit_add_dialog.get_window(main_window)
+    edit_add_window.show()
 
 
 def get_actions_vbox():
@@ -84,7 +68,7 @@ def get_actions_vbox():
         lambda: execute.execute_command(execute_for_customer, process_dropdown.currentText()))
 
     edit_data_button = QPushButton("Edit Data")
-    edit_data_button.clicked.connect(lambda: QDialog().show())
+    edit_data_button.clicked.connect(lambda: open_edit_dialog())
 
     exit_button = QPushButton("Exit")
     exit_button.clicked.connect(lambda: app.exit(0))
@@ -100,6 +84,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     main_window = QWidget()
+    main_window.setWindowTitle("Helper")
     data.set_attr_data()
     execute.set_meta_data()
 
@@ -112,5 +97,4 @@ if __name__ == "__main__":
 
     main_window.setLayout(main_layout)
     main_window.show()
-    ini()
     app.exec()
