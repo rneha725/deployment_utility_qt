@@ -5,3 +5,4 @@ global_data = {}
 customer_list = {}
 application_metadata = {}
 applications = {}
+data = {}

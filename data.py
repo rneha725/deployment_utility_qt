@@ -3,11 +3,27 @@ import json
 import global_vars
 
 
+def refresh_data():
+    with open(global_vars.FILE, 'w') as outfile:
+        json.dump(global_vars.data, outfile)
+
+    # todo refresh data
+
+
+def add_customer(name):
+    with open(global_vars.FILE) as data_file: \
+            global_vars.data = json.load(data_file)
+
+    print("this" + str(global_vars.data))
+    id = int(len(global_vars.data["customers"].keys()))
+    global_vars.data["customers"].setdefault(str(id), name)
+
+
 def set_attribute_data(attribute):
     with open(global_vars.FILE) as data_file:
-        global data
-        data = json.load(data_file)
-    attribute_data = data[attribute]
+        global_vars.data = json.load(data_file)
+    print(global_vars.data)
+    attribute_data = global_vars.data[attribute]
     return attribute_data
 
 
