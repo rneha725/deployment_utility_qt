@@ -95,6 +95,7 @@ def create_command_str(cust_id, app_id, processes):
     return neo_commands
 
 
+# todo refactor
 def run_command_cust(commands, key, checkbox_cust):
     status_button_list[key][0].setText("Thread created")
     checkbox_cust.setDisabled(True)

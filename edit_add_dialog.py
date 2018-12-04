@@ -34,14 +34,21 @@ def get_applications_drop_down():
 def save_app_data(application, account, host, source, user, password, app_id, cust_id):
     # todo assuming that only two applications are there, "1" & "2" are there in applications
     object = {
-        "application": application,
-        "account": account,
-        "source": source,
-        "host": host,
-        "user": user,
-        "password": password
+        "application": application.text(),
+        "account": account.text(),
+        "source": source.text(),
+        "host": host.text(),
+        "user": user.text(),
+        "password": password.text()
     }
-    global_vars.data['applications'][app_id].setdefault(cust_id, object)
+    try:
+        global_vars.data['applications'][app_id][cust_id] = object
+    except KeyError:
+        global_vars.data['applications'][app_id].setdefault(cust_id, object)
+
+    print("Data: " + app_id + " " + cust_id)
+    print(global_vars.data)
+    print(object)
     data.refresh_data()
 
 
