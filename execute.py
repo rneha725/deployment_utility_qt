@@ -15,8 +15,8 @@ success_failure = {
     "deploy": "Deployment finished successfully",
     "start": "STARTING",
     "stop": "STOPPED",
-    "status": "STARTED"
-    # "restart":
+    "status": "STARTED",
+    "restart": "STARTING"
 }
 process_list = {
     "Deploy": 'deploy', "Deploy and Restart": 'deploy,restart', "Restart": 'restart', "Stop": 'stop',
@@ -59,7 +59,7 @@ def deserialize_command(command_dict):
     neo_command = neo_command + "--password " + command_dict["password"] + " "
     neo_command = neo_command + "--host " + command_dict["host"] + " "
     if 'source' in command_dict:
-        neo_command = neo_command + '--source' + command_dict["source"]
+        neo_command = neo_command + '--source ' + command_dict["source"]
 
     return neo_command
 
@@ -98,6 +98,7 @@ def create_command_str(cust_id, app_id, processes):
 def run_command_cust(commands, key, checkbox_cust):
     status_button_list[key][0].setText("Thread created")
     checkbox_cust.setDisabled(True)
+    global_vars.status_text[key] = ""
     # for each customer everything should be in sync
 
     for command in commands:
@@ -106,17 +107,49 @@ def run_command_cust(commands, key, checkbox_cust):
             child = pexpect.spawn(str_command)
             child.expect(r'Are you located inside the EU\?\(yes\/no\) \[Default: no\]')
             child.sendline('yes')
-            status_button_list[key][0].setText("Yes...")
-            global_vars.status_text[key] = "Yes given\n"
-            status = child.expect([success_failure[command["process"]], 'ERROR'])
+            global_vars.status_text[key] += "Yes given\n"
+            if command["process"] == "deploy":
+                status = child.expect(["Uploading started", 'ERROR'], timeout=60000)
+                if status == 1:
+                    raise ChildProcessError("Uploading did not start")
+                else:
+                    status_button_list[key][0].setText("Uploading...")
+                    global_vars.status_text[key] += "\nUploading started..."
+                status = child.expect(["Uploaded", 'ERROR'], timeout=180000)
+                if status == 1:
+                    raise ChildProcessError("Error after uploading")
+                else:
+                    status_button_list[key][0].setText("Uploaded")
+                    global_vars.status_text[key] += "\nUploaded."
+                status = child.expect(["Processing started", 'ERROR'], timeout=60000)
+                if status == 1:
+                    raise ChildProcessError("Error after processing started")
+                else:
+                    status_button_list[key][0].setText("Processing...")
+                    global_vars.status_text[key] += "\nProcessing started..."
+                status = child.expect(["Processing completed", 'ERROR'], timeout=60000)
+                if status == 1:
+                    raise ChildProcessError("Error after processing completed")
+                else:
+                    status_button_list[key][0].setText("Processed.")
+                    global_vars.status_text[key] += "\nProcessing completed."
+
+            status = child.expect([success_failure[command["process"]], 'ERROR'], timeout=60000)
             print(status)
             if status == 1:
-                status_button_list[key][0].setText(status_button_list[key][0].text() + "Error!")
+                child.interact()
+                status_button_list[key][0].setText("Error!")
                 global_vars.status_text[key] += "Error, please try running the command again\n" + str_command
             else:
-                status_button_list[key][0].setText(status_button_list[key][0].text() + "Success!")
+                status_button_list[key][0].setText("Success!")
                 global_vars.status_text[key] += "Process: " + command["process"] + " successful!"
+        except ChildProcessError as ex:
+            print("Exception for:")
+            # child.interact()
+            status_button_list[key][0].setText(status_button_list[key][0].text() + "Error")
+            global_vars.status_text[key] += "\nError, please try running the command again\n" + str_command
         except:
+            child.interact()
             status_button_list[key][0].setText(status_button_list[key][0].text() + "Error")
             global_vars.status_text[key] += "Error, please try running the command again\n" + str_command
 
@@ -135,18 +168,4 @@ def execute_command(data, process_key):
             commands = create_command_str(cust_id, app_id, process_list[process_key])
             # for each checkbox new thread is created
             threading.Thread(target=run_command_cust, args=(commands, key, data[key],)).start()
-            # for command in commands:
-            #     print("spawning for:" + command)
-            #     try:
-            #         child[key] = pexpect.spawn(command)
-            #         child[key].expect(r'Are you located inside the EU\?\(yes\/no\) \[Default: no\]')
-            #         child[key].sendline('yes')
-            #         print(child[key].before+child[key].after)
-            #         threading.Thread(target=run, args=(child[key],)).start()
-            #     except pexpect.EOF:
-            #         print("Error:")
-            #     except pexpect.TIMEOUT:
-            #         print("Timeout for: " + command)
-            #     except pexpect.ExceptionPexpect:
-            #         print("some error: " + command)
     return
